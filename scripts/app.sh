@@ -1,38 +1,20 @@
 #!/bin/bash
 
-## commons
-
-apt-get -y update
-apt-get -y upgrade
-apt-get -y install vim
-apt-get -y install iotop
-apt-get -y install iputils-ping
-
-apt-get install -y netcat
-apt-get install -y dnsutils
 export DEBIAN_FRONTEND=noninteractive
 export TZ="UTC"
-apt-get install -y tzdata
+
+apt-get -y update
+apt-get -y upgrade 
+apt-get -y install vim iotop iputils-ping netcat dnsutils default-jdk
+
+apt-get -y install tzdata
 ln -fs /usr/share/zoneinfo/Europe/Paris /etc/localtime
 dpkg-reconfigure --frontend noninteractive tzdata
 
-## memtier (this will install it for all users)
-mkdir /home/ubuntu/install
-cd /home/ubuntu/install
-apt-get -y install build-essential autoconf automake libpcre3-dev libevent-dev pkg-config zlib1g-dev libssl-dev
-wget -O memtier.tar.gz https://github.com/RedisLabs/memtier_benchmark/archive/refs/tags/1.4.0.tar.gz
-tar xfz memtier.tar.gz
-mv memtier_benchmark-* memtier
-pushd memtier
- autoreconf -ivf
- ./configure
- make
- make install
-popd
-
-echo "${nodes}" >> install.log
-echo "${cluster_dns_suffix}" >> install.log
-#TODO /etc/hosts
+echo "You need to setup the connection to the redis db you created and the hazelcast cluster"
+echo "${cluster_dns}" >> install.log
+echo "${RS_admin}" >> install.log
+echo "${RS_password}" >> install.log
 
 ## redis-benchmark and redis-cli
 wget -O redis-stack.tar.gz https://packages.redis.io/redis-stack/redis-stack-server-6.2.6-v6.bionic.x86_64.tar.gz
@@ -45,3 +27,23 @@ ln -s /home/ubuntu/install/redis-stack/bin/redis-cli /home/ubuntu/.local/bin/red
 # for "sudo su - ubuntu"
 chown -R ubuntu:ubuntu /home/ubuntu/install
 chown -R ubuntu:ubuntu /home/ubuntu/.local
+
+# installing app
+tar xfz redis-bentier.tgz
+
+# For: spring boot jvm.options
+# 
+# Option 1:
+#
+# spring.data.redis.host=16
+# spring.data.redis.port=3000
+# spring.data.redis.password=
+# spring.data.redis.username=
+#
+# Option 1:
+#
+# spring.data.redis.url="redis://user:password@example.com:6379"
+#
+# Then:
+# ./mvnw spring-boot:run
+

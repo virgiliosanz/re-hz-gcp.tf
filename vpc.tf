@@ -27,12 +27,13 @@ resource "google_compute_firewall" "allow-http" {
   network = google_compute_network.vpc.name
   allow {
     protocol = "tcp"
-    ports    = ["10000-19999", "8443", "8001", "8070", "8071", "9081", "9443", "8080", "443"]
+    ports    = ["10000-19999", "8443", "8001", "8070", "8071", "9081", "9443", "8080", "443", "5701-5708"]
     # https://docs.redislabs.com/latest/rs/administering/designing-production/networking/port-configurations/?s=port
+    # https://docs.hazelcast.com/hazelcast/5.2/deploy/deploying-on-gcp
   }
   allow {
     protocol = "udp"
-    ports    = ["53", "5353"]
+    ports    = ["53", "5353", "5701-5708"]
   }
   target_tags   = ["http"]
   source_ranges = ["0.0.0.0/0"]
@@ -48,3 +49,4 @@ resource "google_compute_firewall" "allow-bastion" {
   source_ranges = ["0.0.0.0/0"]
 
 }
+
