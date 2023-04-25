@@ -13,7 +13,7 @@ output "rs_ui_ip" {
 }
 
 output "hz_ui_url" {
-  value = "https://hz1.${var.yourname}-${var.env}.${var.dns_zone_dns_name}:8080"
+  value = "http://hz1.${var.yourname}-${var.env}.${var.dns_zone_dns_name}:8080"
 }
 output "hz_internal_ips" {
   value = flatten([google_compute_instance.hz1.network_interface.0.network_ip, flatten([google_compute_instance.nodeX.*.network_interface.0.network_ip])])
@@ -36,18 +36,18 @@ output "admin_password" {
   value = nonsensitive(random_password.password.result)
   #sensitive = true
 }
-output "how_to_ssh_to_app" {
-  value = var.app_enabled ? "gcloud compute ssh ${google_compute_instance.app.0.name}" : ""
+output "how_to_ssh_to_bentier" {
+  value = "gcloud compute ssh ${google_compute_instance.bentier.name}"
 }
 
 output "how_to_ssh_to_jmeter" {
-  value = var.app_enabled ? "gcloud compute ssh ${google_compute_instance.jmeter.0.name}" : ""
+  value = "gcloud compute ssh ${google_compute_instance.jmeter.name}"
 }
 output "how_to_ssh_to_rs_node1" {
-  value = var.app_enabled ? "gcloud compute ssh ${google_compute_instance.node1.name}" : ""
+  value = "gcloud compute ssh ${google_compute_instance.node1.name}"
 }
 output "how_to_ssh_to_hz_node1" {
-  value = var.app_enabled ? "gcloud compute ssh ${google_compute_instance.hz1.name}" : ""
+  value = "gcloud compute ssh ${google_compute_instance.hz1.name}"
 }
 
 output "ssh_google_key" {

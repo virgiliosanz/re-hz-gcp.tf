@@ -1,20 +1,23 @@
 #!/bin/bash
 
-export DEBIAN_FRONTEND=noninteractive
-export TZ="UTC"
+echo "$(date) - PREPARING machine" >> /tmp/install.log
+
 
 apt-get -y update
 apt-get -y upgrade 
 apt-get -y install vim iotop iputils-ping netcat dnsutils default-jdk
 
+export DEBIAN_FRONTEND=noninteractive
+export TZ="UTC"
 apt-get -y install tzdata
 ln -fs /usr/share/zoneinfo/Europe/Paris /etc/localtime
 dpkg-reconfigure --frontend noninteractive tzdata
 
-echo "You need to setup the connection to the redis db you created and the hazelcast cluster"
-echo "${cluster_dns}" >> install.log
-echo "${RS_admin}" >> install.log
-echo "${RS_password}" >> install.log
+echo "You need to setup the connection to the redis db you created and the hazelcast cluster" >> /tmp/install.log
+echo "${cluster_dns}" >> /tmp/install.log
+echo "${RS_admin}" >> /tmp/install.log
+echo "${RS_password}" >> /tmp/install.log
+echo "Everything at /home/ubuntu/" >> /tmp/install.log
 
 ## redis-benchmark and redis-cli
 wget -O redis-stack.tar.gz https://packages.redis.io/redis-stack/redis-stack-server-6.2.6-v6.bionic.x86_64.tar.gz
@@ -29,7 +32,13 @@ chown -R ubuntu:ubuntu /home/ubuntu/install
 chown -R ubuntu:ubuntu /home/ubuntu/.local
 
 # installing app
+wget https://github.com/virgiliosanz/re-hz-gcp.tf/raw/main/misc/redis-bentier.tgz
 tar xfz redis-bentier.tgz
+mv redis-bentier /home/ubuntu/
+
+wget https://raw.githubusercontent.com/virgiliosanz/re-hz-gcp.tf/main/misc/jvm.options -O /home/ubuntu/jvm.options
+
+chown -R ubuntu:ubuntu /hom/ubuntu/*
 
 # For: spring boot jvm.options
 # 

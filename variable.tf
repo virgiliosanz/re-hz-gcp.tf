@@ -53,7 +53,7 @@ variable "machine_type" {
   // n2-highcpu-16  // 16 vCPU 32 GB
 }
 
-variable "app_machine_type" {
+variable "client_machine_type" {
   default = "n2-highcpu-16" // We need a high cpu for memtier
 
 }
@@ -77,12 +77,6 @@ variable "zone_name" {
 }
 // Redis on Flash flag to fully create SSD NVMe disk and not only enable Flash in cluster configuration
 variable "rof_nvme_enabled" {
-  default = false
-}
-
-// other possible edits ************************************* client machine
-// client machine with memtier is optional
-variable "app_enabled" {
   default = false
 }
 

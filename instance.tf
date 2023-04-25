@@ -88,35 +88,6 @@ resource "google_compute_instance" "hz1" {
       HZ_release = var.HZ_release
     })
   }
-  // Copy hazelcast configuration for google gcp
-  provisioner "file" {
-    source      = "misc/hazelcast.xml"
-    destination = "/opt/hazelcast/config/hazelcast.xml"
-
-    connection {
-      host        = self.network_interface.0.access_config.0.nat_ip
-      type        = "ssh"
-      user        = "root"
-      private_key = "$file($pathexpand(var.google_ssh_key))"
-      agent       = false
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo -H -u hazelcast bash -c \"/opt/hazelcast/bin/hz start >& /tmp/hz.log &\"",
-      "sudo -H -u hazelcast bash -c \"/opt/hazelcast/bin/management-center/bin/hz-mc start >& /tmp/hz-mc.log &\""
-    ]
-
-    connection {
-      host        = self.network_interface.0.access_config.0.nat_ip
-      type        = "ssh"
-      user        = "root"
-      private_key = "$file($pathexpand(var.google_ssh_key))"
-      agent       = false
-    }
-  }
-
   network_interface {
     subnetwork = google_compute_subnetwork.public_subnet.name
     access_config {
@@ -155,42 +126,11 @@ resource "google_compute_instance" "hzX" {
       // Ephemeral IP
     }
   }
-
-  // Copy hazelcast configuration for google gcp
-  provisioner "file" {
-    source      = "misc/hazelcast.xml"
-    destination = "/opt/hazelcast/config/hazelcast.xml"
-
-    connection {
-      host        = self.network_interface.0.access_config.0.nat_ip
-      type        = "ssh"
-      user        = "root"
-      private_key = "$pathexpand('~/.ssh/google_compute_engine.pub')"
-      agent       = false
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo -H -u hazelcast bash -c \"/opt/hazelcast/bin/hz start >& /tmp/hz.log &\""
-    ]
-
-    connection {
-      host        = self.network_interface.0.access_config.0.nat_ip
-      type        = "ssh"
-      user        = "root"
-      private_key = "$file($pathexpand(var.google_ssh_key))"
-      agent       = false
-    }
-  }
 }
 
-// TODO: Install spring boot app
-resource "google_compute_instance" "app" {
-  count = var.app_enabled ? 1 : 0
-
-  name         = "${var.yourname}-${var.env}-app"
-  machine_type = var.app_machine_type
+resource "google_compute_instance" "bentier" {
+  name         = "${var.yourname}-${var.env}-bentier"
+  machine_type = var.client_machine_type
   tags         = ["ssh", "http"]
   boot_disk {
     initialize_params {
@@ -204,7 +144,7 @@ resource "google_compute_instance" "app" {
   }
   metadata = {
     ssh-keys = "ubuntu:${file(var.google_ssh_key)}"
-    startup-script = templatefile("${path.module}/scripts/app.sh", {
+    startup-script = templatefile("${path.module}/scripts/bentier.sh", {
       cluster_dns = "cluster.${var.yourname}-${var.env}.${var.dns_zone_dns_name}",
       RS_admin    = var.RS_admin
       RS_password = random_password.password.result
@@ -220,10 +160,8 @@ resource "google_compute_instance" "app" {
 
 // TODO: Install jmeter
 resource "google_compute_instance" "jmeter" {
-  count = var.app_enabled ? 1 : 0
-
   name         = "${var.yourname}-${var.env}-jmeter"
-  machine_type = var.app_machine_type
+  machine_type = var.client_machine_type
   tags         = ["ssh", "http"]
   boot_disk {
     initialize_params {
@@ -238,10 +176,10 @@ resource "google_compute_instance" "jmeter" {
   metadata = {
     ssh-keys = "ubuntu:${file(var.google_ssh_key)}"
     startup-script = templatefile("${path.module}/scripts/jmeter.sh", {
-      app_hostname    = "app.${var.yourname}-${var.env}.${var.dns_zone_dns_name}",
-      jmeter_hostname = "jmeter.${var.yourname}-${var.env}.${var.dns_zone_dns_name}",
-      jmeter_release  = var.jmeter_release
-      jmeter_port     = var.jmeter_port
+      bentier_hostname = "bentier.${var.yourname}-${var.env}.${var.dns_zone_dns_name}",
+      jmeter_hostname  = "jmeter.${var.yourname}-${var.env}.${var.dns_zone_dns_name}",
+      jmeter_release   = var.jmeter_release
+      jmeter_port      = var.jmeter_port
     })
   }
   network_interface {
@@ -292,13 +230,13 @@ resource "google_dns_record_set" "hzX" {
 }
 
 
-resource "google_dns_record_set" "app" {
-  name         = "app.${var.yourname}-${var.env}.${var.dns_zone_dns_name}."
+resource "google_dns_record_set" "bentier" {
+  name         = "bentier.${var.yourname}-${var.env}.${var.dns_zone_dns_name}."
   type         = "A"
   ttl          = 300
   managed_zone = var.dns_managed_zone
 
-  rrdatas = [google_compute_instance.app.0.network_interface.0.access_config.0.nat_ip]
+  rrdatas = [google_compute_instance.bentier.network_interface.0.access_config.0.nat_ip]
 }
 
 resource "google_dns_record_set" "jmeter" {
@@ -307,7 +245,7 @@ resource "google_dns_record_set" "jmeter" {
   ttl          = 300
   managed_zone = var.dns_managed_zone
 
-  rrdatas = [google_compute_instance.jmeter.0.network_interface.0.access_config.0.nat_ip]
+  rrdatas = [google_compute_instance.jmeter.network_interface.0.access_config.0.nat_ip]
 }
 
 resource "google_dns_record_set" "name_servers" {

@@ -4,7 +4,7 @@
 # PREREQ 
 
 
-echo "$(date) - PREPARING machine node" >> /home/ubuntu/install.log
+echo "$(date) - PREPARING machine node" >> /tmp/install.log
 
 apt-get -y update
 apt-get -y upgrade
@@ -30,29 +30,29 @@ service systemd-resolved restart
 sysctl -w net.ipv4.ip_local_port_range="40000 65535"
 echo "net.ipv4.ip_local_port_range = 40000 65535" >> /etc/sysctl.conf
 
-echo "$(date) - PREPARE done" >> /home/ubuntu/install.log
+echo "$(date) - PREPARE done" >> /tmp/install.log
 
 ################
 # RS
 
-echo "$(date) - INSTALLING Redis Enterprise" >> /home/ubuntu/install.log
+echo "$(date) - INSTALLING Redis Enterprise" >> /tmp/install.log
 
 mkdir /home/ubuntu/install
 wget "${RS_release}" -P /home/ubuntu/install
 tar xvf /home/ubuntu/install/redislabs*.tar -C /home/ubuntu/install
 
-echo "$(date) - INSTALLING Redis Enterprise - silent installation" >> /home/ubuntu/install.log
+echo "$(date) - INSTALLING Redis Enterprise - silent installation" >> /tmp/install.log
 
 cd /home/ubuntu/install
 sudo /home/ubuntu/install/install.sh -y 2>&1 >> /home/ubuntu/install_rs.log
 sudo adduser ubuntu redislabs
 
-echo "$(date) - INSTALL done" >> /home/ubuntu/install.log
+echo "$(date) - INSTALL done" >> /tmp/install.log
 
 ################
 # FLASH
 if [ $(lsblk | grep nvme0n1 | wc -l) -eq 1 ]; then
-    echo "$(date) - SETTING UP Redis on Flash NVMe disks" >> /home/ubuntu/install.log
+    echo "$(date) - SETTING UP Redis on Flash NVMe disks" >> /tmp/install.log
     mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/nvme0n1 /dev/nvme0n2
     mkfs.ext4 -F /dev/md0
     mkdir -p /mnt/nvme
@@ -71,26 +71,26 @@ fi
 # NODE
 
 node_external_addr=`curl ifconfig.me/ip`
-echo "Node ${node_id} : $node_external_addr" >> /home/ubuntu/install.log
+echo "Node ${node_id} : $node_external_addr" >> /tmp/install.log
 if [ ${node_id} -eq 1 ]; then
-    echo "create cluster" >> /home/ubuntu/install.log
-    echo "rladmin cluster create name ${cluster_dns} username ${RS_admin} password '${RS_password}' external_addr $node_external_addr flash_enabled " >> /home/ubuntu/install.log
-    /opt/redislabs/bin/rladmin cluster create name ${cluster_dns} username ${RS_admin} password '${RS_password}' external_addr $node_external_addr flash_enabled 2>&1 >> /home/ubuntu/install.log
+    echo "create cluster" >> /tmp/install.log
+    echo "rladmin cluster create name ${cluster_dns} username ${RS_admin} password '${RS_password}' external_addr $node_external_addr flash_enabled " >> /tmp/install.log
+    /opt/redislabs/bin/rladmin cluster create name ${cluster_dns} username ${RS_admin} password '${RS_password}' external_addr $node_external_addr flash_enabled 2>&1 >> /tmp/install.log
 else
-    echo "joining cluster " >> /home/ubuntu/install.log
-    echo "/opt/redislabs/bin/rladmin cluster join username ${RS_admin} password '${RS_password}' nodes ${node_1_ip} external_addr $node_external_addr flash_enabled replace_node ${node_id}" >> /home/ubuntu/install.log
+    echo "joining cluster " >> /tmp/install.log
+    echo "/opt/redislabs/bin/rladmin cluster join username ${RS_admin} password '${RS_password}' nodes ${node_1_ip} external_addr $node_external_addr flash_enabled replace_node ${node_id}" >> /tmp/install.log
     for i in {1..10}
     do
-	    /opt/redislabs/bin/rladmin cluster join username ${RS_admin} password '${RS_password}' nodes ${node_1_ip} external_addr $node_external_addr flash_enabled replace_node ${node_id} 2>&1 >> /home/ubuntu/install.log
+	    /opt/redislabs/bin/rladmin cluster join username ${RS_admin} password '${RS_password}' nodes ${node_1_ip} external_addr $node_external_addr flash_enabled replace_node ${node_id} 2>&1 >> /tmp/install.log
     	if [ $? -eq 0 ]; then
 	        break
     	else
-            echo "master node not available, trying again in 30s..."  >> /home/ubuntu/install.log
+            echo "master node not available, trying again in 30s..."  >> /tmp/install.log
 	        sleep 30
     	fi
     done
 fi
-echo "$(date) - DONE creating cluster node" >> /home/ubuntu/install.log
+echo "$(date) - DONE creating cluster node" >> /tmp/install.log
 
 ################
 # NODE external_addr - it runs at each reboot to update it
@@ -108,4 +108,4 @@ chown ubuntu /home/ubuntu/node_externaladdr.sh
 chmod u+x /home/ubuntu/node_externaladdr.sh
 /home/ubuntu/node_externaladdr.sh
 
-echo "$(date) - DONE updating RS external_addr" >> /home/ubuntu/install.log
+echo "$(date) - DONE updating RS external_addr" >> /tmp/install.log
