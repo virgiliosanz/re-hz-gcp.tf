@@ -5,7 +5,8 @@ echo "$(date) - PREPARING machine" >> /tmp/install.log
 
 apt-get -y update
 apt-get -y upgrade 
-apt-get -y install vim iotop iputils-ping netcat dnsutils default-jdk
+apt-get -y install vim iotop iputils-ping netcat dnsutils openjdk-17-jdk maven byobu
+
 
 export DEBIAN_FRONTEND=noninteractive
 export TZ="UTC"
@@ -38,7 +39,7 @@ mv redis-bentier /home/ubuntu/
 
 wget https://raw.githubusercontent.com/virgiliosanz/re-hz-gcp.tf/main/misc/jvm.options -O /home/ubuntu/jvm.options
 
-chown -R ubuntu:ubuntu /hom/ubuntu/*
+chown -R ubuntu:ubuntu /home/ubuntu
 
 # For: spring boot jvm.options
 # 
@@ -54,5 +55,11 @@ chown -R ubuntu:ubuntu /hom/ubuntu/*
 # spring.data.redis.url="redis://user:password@example.com:6379"
 #
 # Then:
+# mvn -N io.takari:maven:wrapper
 # ./mvnw spring-boot:run
-
+echo "setup jvm.options: " >> /tmp/install.log
+echo "spring.data.redis.url="redis://user:password@example.com:6379"" >> /tmp/install.log
+echo "Setup hazelcast" >> /tmp/install.log
+echo "Then run:" >> /tmp/install.log
+echo "mvn -N io.takari:maven:wrapper" >> /tmp/install.log
+echo "./mvnw spring-boot:run" >> /tmp/install.log

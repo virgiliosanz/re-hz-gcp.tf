@@ -11,6 +11,7 @@ apt-get -y upgrade
 apt-get -y install vim
 apt-get -y install iotop
 apt-get -y install iputils-ping
+apt-get -y install byobu
 
 apt-get install -y netcat
 apt-get install -y dnsutils

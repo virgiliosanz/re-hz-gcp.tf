@@ -6,7 +6,7 @@ export TZ="UTC"
 
 apt-get -y update
 apt-get -y upgrade 
-apt-get -y install vim iotop iputils-ping netcat dnsutils default-jdk
+apt-get -y install vim iotop iputils-ping netcat dnsutils default-jdk byobu
 
 apt-get -y install tzdata
 ln -fs /usr/share/zoneinfo/Europe/Paris /etc/localtime

@@ -33,7 +33,7 @@ resource "google_compute_firewall" "allow-http" {
   }
   allow {
     protocol = "udp"
-    ports    = ["53", "5353", "5701-5708"]
+    ports    = ["53", "5353", "5701-5708", "54327"]
   }
   target_tags   = ["http"]
   source_ranges = ["0.0.0.0/0"]
