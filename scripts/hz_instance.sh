@@ -35,23 +35,22 @@ echo "Everything at /home/ubuntu/" >> /tmp/install.log
 
 
 ########### Open Source
-HZ_DEST_PATH=/opt/hazelcast
 wget https://github.com/hazelcast/hazelcast/releases/download/v${HZ_release}/hazelcast-${HZ_release}.zip
 unzip hazelcast-${HZ_release}.zip -d /opt
-ln -s /opt/hazelcast-${HZ_release} ${HZ_DEST_PATH}
+ln -s /opt/hazelcast-${HZ_release} /opt/hazelcast
 
 
-mv ${HZ_DEST_PATH}/config/hazelcast.xml ${HZ_DEST_PATH}/config/hazelcast.xml.bak
-wget https://raw.githubusercontent.com/virgiliosanz/re-hz-gcp.tf/main/misc/hazelcast.xml -O ${HZ_DEST_PATH}/config/hazelcast.xml
-sed -i -E "s/{ip_hz_1}/${node_id}/" ${HZ_DEST_PATH}/config/hazelcast.xml
+mv /opt/hazelcast/config/hazelcast.xml /opt/hazelcast/config/hazelcast.xml.bak
+wget https://raw.githubusercontent.com/virgiliosanz/re-hz-gcp.tf/main/misc/hazelcast.xml -O /opt/hazelcast/config/hazelcast.xml
+sed -i -E "s/{ip_hz_1}/${node_id}/" /opt/hazelcast/config/hazelcast.xml
 
 
 # Change owner of the Hazelcast directories and links
-chown -R ubuntu:ubuntu ${HZ_DEST_PATH} /opt/hazelcast-${HZ_release}
+chown -R ubuntu:ubuntu /opt/hazelcast /opt/hazelcast-${HZ_release}
 
-sudo -H -u ubuntu bash -c "${HZ_DEST_PATH}/bin/hz start >& /tmp/hz.log &"
+sudo -H -u ubuntu bash -c "/opt/hazelcast/bin/hz start >& /tmp/hz.log &"
 
 if [ "${node_id}" -eq "1" ];
 then
-  sudo -H -u ubuntu bash -c "${HZ_DEST_PATH}/management-center/bin/hz-mc start >& /tmp/hz-mc.log &"
+  sudo -H -u ubuntu bash -c "/opt/hazelcast/management-center/bin/hz-mc start >& /tmp/hz-mc.log &"
 fi
