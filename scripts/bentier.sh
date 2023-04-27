@@ -5,7 +5,7 @@ echo "$(date) - PREPARING machine" >> /tmp/install.log
 
 apt-get -y update
 apt-get -y upgrade 
-apt-get -y install vim iotop iputils-ping netcat dnsutils openjdk-17-jdk maven byobu
+apt-get -y install vim iotop iputils-ping netcat dnsutils openjdk-17-jdk byobu
 
 
 export DEBIAN_FRONTEND=noninteractive
@@ -18,6 +18,9 @@ echo "You need to setup the connection to the redis db you created and the hazel
 echo "${cluster_dns}" >> /tmp/install.log
 echo "${RS_admin}" >> /tmp/install.log
 echo "${RS_password}" >> /tmp/install.log
+echo "Setup Hazelcast" >> /tmp/install.log
+echo "HZ node IPs: " >> /tmp/install.log
+echo "${hz_node_ips}" >> /tmp/install.log
 echo "Everything at /home/ubuntu/" >> /tmp/install.log
 
 ## redis-benchmark and redis-cli
@@ -39,8 +42,17 @@ mv redis-bentier /home/ubuntu/
 
 wget https://raw.githubusercontent.com/virgiliosanz/re-hz-gcp.tf/main/misc/jvm.options -O /home/ubuntu/jvm.options
 
-chown -R ubuntu:ubuntu /home/ubuntu
+wget https://raw.githubusercontent.com/virgiliosanz/re-hz-gcp.tf/main/misc/hazelcast-client.xml -O /home/ubuntu/hazelcast-client.xml
+sed -i -E "s/\{hz_node_ips\}/${hz_node_ips}/" /home/ubuntu/hazelcast-client.xml
 
+
+wget https://dlcdn.apache.org/maven/maven-3/3.9.1/binaries/apache-maven-3.9.1-bin.tar.gz
+tar xvfz apache-maven-3.9.1-bin.tar.gz
+mv apache-maven-3.9.1 /home/ubuntu/maven
+echo "export PATH=\$PATH:/home/ubuntu/maven/bin/" >> /home/ubuntu/.bashrc
+ln -s /home/ubuntu/maven/bin/mvn /home/ubuntu/.local/bin/mvn
+
+chown -R ubuntu:ubuntu /home/ubuntu
 # For: spring boot jvm.options
 # 
 # Option 1:
@@ -58,8 +70,8 @@ chown -R ubuntu:ubuntu /home/ubuntu
 # mvn -N io.takari:maven:wrapper
 # ./mvnw spring-boot:run
 echo "setup jvm.options: " >> /tmp/install.log
+echo "change port to 8080" >> /tmp/install.log
 echo "spring.data.redis.url="redis://user:password@example.com:6379"" >> /tmp/install.log
 echo "Setup hazelcast" >> /tmp/install.log
 echo "Then run:" >> /tmp/install.log
-echo "mvn -N io.takari:maven:wrapper" >> /tmp/install.log
-echo "./mvnw spring-boot:run" >> /tmp/install.log
+echo "./mvn spring-boot:run" >> /tmp/install.log

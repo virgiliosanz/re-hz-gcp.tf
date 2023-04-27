@@ -42,7 +42,6 @@ ln -s /opt/hazelcast-${HZ_release} /opt/hazelcast
 
 mv /opt/hazelcast/config/hazelcast.xml /opt/hazelcast/config/hazelcast.xml.bak
 wget https://raw.githubusercontent.com/virgiliosanz/re-hz-gcp.tf/main/misc/hazelcast.xml -O /opt/hazelcast/config/hazelcast.xml
-sed -i -E "s/{ip_hz_1}/${node_id}/" /opt/hazelcast/config/hazelcast.xml
 
 
 # Change owner of the Hazelcast directories and links
@@ -52,5 +51,8 @@ sudo -H -u ubuntu bash -c "/opt/hazelcast/bin/hz start >& /tmp/hz.log &"
 
 if [ "${node_id}" -eq "1" ];
 then
+  sed -i -E "s/\{ip_hz_1\}/$(hostname -I | awk '{print $1}')/" /opt/hazelcast/config/hazelcast.xml
   sudo -H -u ubuntu bash -c "/opt/hazelcast/management-center/bin/hz-mc start >& /tmp/hz-mc.log &"
+else
+  sed -i -E "s/\{ip_hz_1\}/${node_1_ip}/" /opt/hazelcast/config/hazelcast.xml
 fi

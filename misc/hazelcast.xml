@@ -112,7 +112,7 @@
             </multicast>
 
             <!-- Specifies whether the TCP/IP discovery is enabled or not. Default value is false. -->
-            <tcp-ip enabled="false">
+            <tcp-ip enabled="true">
                 <member-list>
                     <member>{ip_hz_1}</member>
                 </member-list>
