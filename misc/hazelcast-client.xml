@@ -42,7 +42,8 @@
             If a port number is not specified, port range 5701-5703 will
             be tried.
             -->
-            <address>{hz_node_ips}</address>
+            <!--address>{hz_node_ips}</address-->
+            {hz_node_ips}
         </cluster-members>
         <!--
         Whether client should discover and connect other members in the

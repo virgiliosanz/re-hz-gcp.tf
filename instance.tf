@@ -148,7 +148,7 @@ resource "google_compute_instance" "bentier" {
       cluster_dns = "cluster.${var.yourname}-${var.env}.${var.dns_zone_dns_name}",
       RS_admin    = var.RS_admin
       RS_password = random_password.password.result
-      hz_node_ips = flatten([google_compute_instance.hz1.network_interface.0.network_ip, flatten([google_compute_instance.nodeX.*.network_interface.0.network_ip])])
+      hz_node_ips = join(" ", [for s in flatten([google_compute_instance.hz1.network_interface.0.network_ip, flatten([google_compute_instance.nodeX.*.network_interface.0.network_ip])]) : format("%q", s)])
     })
   }
   network_interface {

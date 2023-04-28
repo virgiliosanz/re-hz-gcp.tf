@@ -14,6 +14,7 @@ apt-get -y install tzdata
 ln -fs /usr/share/zoneinfo/Europe/Paris /etc/localtime
 dpkg-reconfigure --frontend noninteractive tzdata
 
+echo "Everything at /home/ubuntu/" >> /tmp/install.log
 echo "You need to setup the connection to the redis db you created and the hazelcast cluster" >> /tmp/install.log
 echo "${cluster_dns}" >> /tmp/install.log
 echo "${RS_admin}" >> /tmp/install.log
@@ -21,7 +22,12 @@ echo "${RS_password}" >> /tmp/install.log
 echo "Setup Hazelcast" >> /tmp/install.log
 echo "HZ node IPs: " >> /tmp/install.log
 echo "${hz_node_ips}" >> /tmp/install.log
-echo "Everything at /home/ubuntu/" >> /tmp/install.log
+echo "setup jvm.options: " >> /tmp/install.log
+echo "change port to 8080" >> /tmp/install.log
+echo "spring.data.redis.url="redis://user:password@example.com:6379"" >> /tmp/install.log
+echo "Setup hazelcast" >> /tmp/install.log
+echo "Then run:" >> /tmp/install.log
+echo "./mvn spring-boot:run" >> /tmp/install.log
 
 ## redis-benchmark and redis-cli
 wget -O redis-stack.tar.gz https://packages.redis.io/redis-stack/redis-stack-server-6.2.6-v6.bionic.x86_64.tar.gz
@@ -41,10 +47,15 @@ tar xfz redis-bentier.tgz
 mv redis-bentier /home/ubuntu/
 
 wget https://raw.githubusercontent.com/virgiliosanz/re-hz-gcp.tf/main/misc/jvm.options -O /home/ubuntu/jvm.options
+cp -f /home/ubuntu/jvm.options /home/ubuntu/redis-bentier/src/main/resources
 
 wget https://raw.githubusercontent.com/virgiliosanz/re-hz-gcp.tf/main/misc/hazelcast-client.xml -O /home/ubuntu/hazelcast-client.xml
-sed -i -E "s/\{hz_node_ips\}/${hz_node_ips}/" /home/ubuntu/hazelcast-client.xml
-
+IPs=""
+for IP in ${hz_node_ips}; do
+  IPs+="<address>$IP</address>" 
+done
+sed -i -E "s/\{hz_node_ips\}/$IPs/" /home/ubuntu/hazelcast-client.xml
+cp -f /home/ubuntu/hazelcast-client.xml /home/ubuntu/redis-bentier/src/main/resources
 
 wget https://dlcdn.apache.org/maven/maven-3/3.9.1/binaries/apache-maven-3.9.1-bin.tar.gz
 tar xvfz apache-maven-3.9.1-bin.tar.gz
@@ -69,9 +80,3 @@ chown -R ubuntu:ubuntu /home/ubuntu
 # Then:
 # mvn -N io.takari:maven:wrapper
 # ./mvnw spring-boot:run
-echo "setup jvm.options: " >> /tmp/install.log
-echo "change port to 8080" >> /tmp/install.log
-echo "spring.data.redis.url="redis://user:password@example.com:6379"" >> /tmp/install.log
-echo "Setup hazelcast" >> /tmp/install.log
-echo "Then run:" >> /tmp/install.log
-echo "./mvn spring-boot:run" >> /tmp/install.log
