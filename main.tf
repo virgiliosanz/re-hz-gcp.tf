@@ -1,8 +1,8 @@
 provider "google" {
-  project     = var.project
-  credentials = var.credentials
-  region      = var.region_name
-  zone        = var.zone_name
+  project = var.project
+  # credentials = var.credentials
+  region = var.region_name
+  zone   = var.zone_name
 }
 ######################################################################
 output "rs_ui_url" {
@@ -18,8 +18,6 @@ output "hz_ui_url" {
 output "hz_internal_ips" {
   value = flatten([google_compute_instance.hz1.network_interface.0.network_ip, flatten([google_compute_instance.nodeX.*.network_interface.0.network_ip])])
 }
-
-
 output "rs_cluster_dns" {
   value = "cluster.${var.yourname}-${var.env}.${var.dns_zone_dns_name}"
 }
@@ -39,7 +37,6 @@ output "admin_password" {
 output "how_to_ssh_to_bentier" {
   value = "gcloud compute ssh ${google_compute_instance.bentier.name}"
 }
-
 output "how_to_ssh_to_jmeter" {
   value = "gcloud compute ssh ${google_compute_instance.jmeter.name}"
 }
@@ -49,7 +46,9 @@ output "how_to_ssh_to_rs_node1" {
 output "how_to_ssh_to_hz_node1" {
   value = "gcloud compute ssh ${google_compute_instance.hz1.name}"
 }
-
 output "ssh_google_key" {
   value = var.google_ssh_key
+}
+output "google_credentials" {
+  value = var.credentials
 }

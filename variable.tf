@@ -3,42 +3,25 @@
 // yourname="...."
 // credentials="GCP IAM service account key file.json"
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 variable "yourname" {
   # No default
   # Use CLI or interactive input. It is best to setup your own terraform.tfvars
 }
 
-variable "credentials" {
-  default = "central-beach-194106-fda731676157.json"
+// machine name will be "<yourname>-<env>-node1"
+// use "default" ie same as default "terraform workspace"
+variable "env" {
+  default = "default"
 }
 
-variable "google_ssh_key" {
-  default = "~/.ssh/google_compute_engine.pub"
-}
 
+// ------------------------------------------------------
+// Hardware
+//
 variable "clustersize" {
   # You should use 3 for some more realistic installation
   default = "3"
-}
-
-variable "RS_release" {
-  default = "https://s3.amazonaws.com/redis-enterprise-software-downloads/6.4.2/redislabs-6.4.2-61-focal-amd64.tar"
-}
-
-variable "HZ_release" {
-  default = "5.2.3"
-}
-
-variable "jmeter_release" {
-  default = "https://dlcdn.apache.org/jmeter/binaries/apache-jmeter-5.5.tgz"
-}
-
-variable "jmeter_port" {
-  default = "1234"
-}
-
-variable "project" {
-  default = "central-beach-194106"
 }
 
 variable "machine_type" {
@@ -55,31 +38,52 @@ variable "machine_type" {
 
 variable "client_machine_type" {
   default = "n2-highcpu-16" // We need a high cpu for memtier
-
 }
 
-// machine name will be "<yourname>-<env>-node1"
-// use "default" ie same as default "terraform workspace"
-variable "env" {
-  default = "default"
+// Storage for machines in GB
+variable "machine_storage_size" {
+  default = 30
+}
+
+// Linux image to install
+variable "linux_image" {
+  default = "ubuntu-minimal-2004-lts"
+}
+
+// ------------------------------------------------------
+// Redis Enterprise Configuration
+//
+variable "RS_release" {
+  default = "https://s3.amazonaws.com/redis-enterprise-software-downloads/6.4.2/redislabs-6.4.2-61-focal-amd64.tar"
 }
 
 variable "RS_admin" {
   default = "admin@redis.io"
 }
 
-variable "region_name" {
-  default = "europe-west1"
+// -----------------------------------------------------
+// -- Hazelcast Configuration
+//
+variable "HZ_release" {
+  default = "5.2.3"
 }
 
-variable "zone_name" {
-  default = "europe-west1-b"
-}
-// Redis on Flash flag to fully create SSD NVMe disk and not only enable Flash in cluster configuration
-variable "rof_nvme_enabled" {
-  default = false
+// -----------------------------------------------------
+// -- jMeter Configuration
+//
+variable "jmeter_release" {
+  default = "https://dlcdn.apache.org/jmeter/binaries/apache-jmeter-5.5.tgz"
 }
 
+variable "jmeter_port" {
+  default = "1234"
+}
+
+
+
+// -----------------------------------------------------
+// -- DNS Configuration
+//
 // must be a zone that already exist - we will not create it but will add to it
 variable "dns_managed_zone" {
   default = "demo-clusters"
@@ -103,6 +107,23 @@ variable "rs_public_subnet" {
   default = "10.26.2.0/24"
 }
 
-variable "linux_image" {
-  default = "ubuntu-minimal-2004-lts"
+// ------------------------------------------------------
+// Google Configuration
+//
+variable "project" {
+  default = "central-beach-194106"
 }
+variable "credentials" {
+  default = "central-beach-194106-fda731676157.json"
+}
+variable "region_name" {
+  default = "europe-west1"
+}
+variable "zone_name" {
+  default = "europe-west1-b"
+}
+
+variable "google_ssh_key" {
+  default = "ssh-google-key.pub"
+}
+

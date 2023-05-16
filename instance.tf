@@ -1,11 +1,10 @@
 resource "google_compute_instance" "node1" {
   name         = "${var.yourname}-${var.env}-1"
   machine_type = var.machine_type
-  tags         = ["ssh", "http"]
   boot_disk {
     initialize_params {
       image = var.linux_image
-      size  = 30 //GB
+      size  = var.machine_storage_size
     }
   }
   labels = {
@@ -36,11 +35,10 @@ resource "google_compute_instance" "nodeX" {
 
   name         = "${var.yourname}-${var.env}-${count.index + 1 + 1}" #+1+1 as we have node1 above
   machine_type = var.machine_type
-  tags         = ["ssh", "http"]
   boot_disk {
     initialize_params {
       image = var.linux_image
-      size  = 30 // GB
+      size  = var.machine_storage_size
     }
   }
   labels = {
@@ -69,11 +67,10 @@ resource "google_compute_instance" "nodeX" {
 resource "google_compute_instance" "hz1" {
   name         = "${var.yourname}-${var.env}-hz-1"
   machine_type = var.machine_type
-  tags         = ["ssh", "http"]
   boot_disk {
     initialize_params {
       image = var.linux_image
-      size  = 30 //GB
+      size  = var.machine_storage_size
     }
   }
   labels = {
@@ -101,11 +98,10 @@ resource "google_compute_instance" "hzX" {
 
   name         = "${var.yourname}-${var.env}-hz-${count.index + 1 + 1}" #+1+1 as we have node1 above
   machine_type = var.machine_type
-  tags         = ["ssh", "http"]
   boot_disk {
     initialize_params {
       image = var.linux_image
-      size  = 30 // GB
+      size  = var.machine_storage_size
     }
   }
   labels = {
@@ -131,11 +127,10 @@ resource "google_compute_instance" "hzX" {
 resource "google_compute_instance" "bentier" {
   name         = "${var.yourname}-${var.env}-bentier"
   machine_type = var.client_machine_type
-  tags         = ["ssh", "http"]
   boot_disk {
     initialize_params {
       image = var.linux_image
-      size  = 30 //GB
+      size  = var.machine_storage_size
     }
   }
   labels = {
@@ -163,11 +158,10 @@ resource "google_compute_instance" "bentier" {
 resource "google_compute_instance" "jmeter" {
   name         = "${var.yourname}-${var.env}-jmeter"
   machine_type = var.client_machine_type
-  tags         = ["ssh", "http"]
   boot_disk {
     initialize_params {
       image = var.linux_image
-      size  = 30 //GB
+      size  = var.machine_storage_size
     }
   }
   labels = {
@@ -191,7 +185,8 @@ resource "google_compute_instance" "jmeter" {
   }
 }
 
-
+// ----------------
+// DNS Redis enterprise cluster
 resource "google_dns_record_set" "node1" {
   name         = "node1.${var.yourname}-${var.env}.${var.dns_zone_dns_name}."
   type         = "A"
@@ -211,6 +206,22 @@ resource "google_dns_record_set" "nodeX" {
   rrdatas = [google_compute_instance.nodeX[count.index].network_interface.0.access_config.0.nat_ip]
 }
 
+locals {
+  n1 = google_dns_record_set.node1.name
+  nX = [for xx in google_dns_record_set.nodeX : xx.name]
+}
+
+resource "google_dns_record_set" "name_servers" {
+  name         = "cluster.${var.yourname}-${var.env}.${var.dns_zone_dns_name}."
+  type         = "NS"
+  ttl          = 60
+  managed_zone = var.dns_managed_zone
+
+  rrdatas = flatten([local.n1, flatten(local.nX)])
+}
+
+// ----------------
+// DNS Hazelcast Cluster
 resource "google_dns_record_set" "hz1" {
   name         = "hz1.${var.yourname}-${var.env}.${var.dns_zone_dns_name}."
   type         = "A"
@@ -230,7 +241,8 @@ resource "google_dns_record_set" "hzX" {
   rrdatas = [google_compute_instance.hzX[count.index].network_interface.0.access_config.0.nat_ip]
 }
 
-
+// ----------------
+// DNS Entries for the rest of machines
 resource "google_dns_record_set" "bentier" {
   name         = "bentier.${var.yourname}-${var.env}.${var.dns_zone_dns_name}."
   type         = "A"
@@ -249,19 +261,7 @@ resource "google_dns_record_set" "jmeter" {
   rrdatas = [google_compute_instance.jmeter.network_interface.0.access_config.0.nat_ip]
 }
 
-resource "google_dns_record_set" "name_servers" {
-  name         = "cluster.${var.yourname}-${var.env}.${var.dns_zone_dns_name}."
-  type         = "NS"
-  ttl          = 60
-  managed_zone = var.dns_managed_zone
 
-  rrdatas = flatten([local.n1, flatten(local.nX)])
-}
-
-locals {
-  n1 = google_dns_record_set.node1.name
-  nX = [for xx in google_dns_record_set.nodeX : xx.name]
-}
 
 resource "random_password" "password" {
   length           = 12

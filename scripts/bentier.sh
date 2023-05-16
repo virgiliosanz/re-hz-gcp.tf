@@ -1,12 +1,15 @@
 #!/bin/bash
 
-echo "$(date) - PREPARING machine" >> /tmp/install.log
+# Write everything to /tmp/install.log
+exec 3>&1 4>&2 1>>/tmp/install.log 2>&1
+# Prints commands, prefixing them with a character stored in an environmental variable ($PS4)
+set -x
 
 
+echo "$(date) - PREPARING machine"
 apt-get -y update
 apt-get -y upgrade 
 apt-get -y install vim iotop iputils-ping netcat dnsutils openjdk-17-jdk byobu
-
 
 export DEBIAN_FRONTEND=noninteractive
 export TZ="UTC"
@@ -14,20 +17,19 @@ apt-get -y install tzdata
 ln -fs /usr/share/zoneinfo/Europe/Paris /etc/localtime
 dpkg-reconfigure --frontend noninteractive tzdata
 
-echo "Everything at /home/ubuntu/" >> /tmp/install.log
-echo "You need to setup the connection to the redis db you created and the hazelcast cluster" >> /tmp/install.log
-echo "${cluster_dns}" >> /tmp/install.log
-echo "${RS_admin}" >> /tmp/install.log
-echo "${RS_password}" >> /tmp/install.log
-echo "Setup Hazelcast" >> /tmp/install.log
-echo "HZ node IPs: " >> /tmp/install.log
-echo "${hz_node_ips}" >> /tmp/install.log
-echo "setup jvm.options: " >> /tmp/install.log
-echo "change port to 8080" >> /tmp/install.log
-echo "spring.data.redis.url="redis://user:password@example.com:6379"" >> /tmp/install.log
-echo "Setup hazelcast" >> /tmp/install.log
-echo "Then run:" >> /tmp/install.log
-echo "./mvn spring-boot:run" >> /tmp/install.log
+echo "You need to setup the connection to the redis db you created and the hazelcast cluster"
+echo "${cluster_dns}"
+echo "${RS_admin}"
+echo "${RS_password}"
+echo "Setup Hazelcast"
+echo "HZ node IPs: "
+echo "${hz_node_ips}"
+echo "setup jvm.options: "
+echo "change port to 8080"
+echo "spring.data.redis.url="redis://user:password@example.com:6379""
+echo "Setup hazelcast"
+echo "Then run:"
+echo "./mvn spring-boot:run"
 
 ## redis-benchmark and redis-cli
 wget -O redis-stack.tar.gz https://packages.redis.io/redis-stack/redis-stack-server-6.2.6-v6.bionic.x86_64.tar.gz

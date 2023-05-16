@@ -1,10 +1,14 @@
 #!/bin/bash
+#
+# Write everything to /tmp/install.log
+exec 3>&1 4>&2 1>>/tmp/install.log 2>&1
+# Prints commands, prefixing them with a character stored in an environmental variable ($PS4)
+set -x
 
 ################
 # PREREQ 
-
-
-echo "$(date) - PREPARING machine node" >> /tmp/install.log
+#
+echo "$(date) - PREPARING machine node"
 
 apt-get -y update
 apt-get -y upgrade
@@ -31,70 +35,53 @@ service systemd-resolved restart
 sysctl -w net.ipv4.ip_local_port_range="40000 65535"
 echo "net.ipv4.ip_local_port_range = 40000 65535" >> /etc/sysctl.conf
 
-echo "$(date) - PREPARE done" >> /tmp/install.log
+echo "$(date) - PREPARE done"
 
 ################
 # RS
-
-echo "$(date) - INSTALLING Redis Enterprise" >> /tmp/install.log
+#
+echo "$(date) - INSTALLING Redis Enterprise"
 
 mkdir /home/ubuntu/install
 wget "${RS_release}" -P /home/ubuntu/install
 tar xvf /home/ubuntu/install/redislabs*.tar -C /home/ubuntu/install
 
-echo "$(date) - INSTALLING Redis Enterprise - silent installation" >> /tmp/install.log
+echo "$(date) - INSTALLING Redis Enterprise - silent installation"
 
 cd /home/ubuntu/install
 sudo /home/ubuntu/install/install.sh -y 2>&1 >> /home/ubuntu/install_rs.log
 sudo adduser ubuntu redislabs
 
-echo "$(date) - INSTALL done" >> /tmp/install.log
-
-################
-# FLASH
-if [ $(lsblk | grep nvme0n1 | wc -l) -eq 1 ]; then
-    echo "$(date) - SETTING UP Redis on Flash NVMe disks" >> /tmp/install.log
-    mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/nvme0n1 /dev/nvme0n2
-    mkfs.ext4 -F /dev/md0
-    mkdir -p /mnt/nvme
-    mount /dev/md0 /var/opt/redislabs/flash/
-    chmod a+w /var/opt/redislabs/flash/
-    apt-get install -y fio util-linux
-    # fio --name=writefile --size=100G --filesize=100G --filename=/var/opt/redislabs/flash/fio --bs=1M --nrfiles=1 --direct=1 --sync=0 --randrepeat=0 --rw=write --refill_buffers --end_fsync=1 --iodepth=200 --ioengine=libaio
-    # fio --time_based --name=benchmark --size=100G --runtime=30 --filename=/dev/md0 --ioengine=libaio --randrepeat=0 --iodepth=128 --direct=1 --invalidate=1 --verify=0 --verify_fatal=0 --numjobs=32 --rw=randread --blocksize=4k --group_reporting --norandommap
-    # fio --time_based --name=benchmark --size=100G --runtime=30 --filename=/dev/md0 --ioengine=libaio --randrepeat=0 --iodepth=128 --direct=1 --invalidate=1 --verify=0 --verify_fatal=0 --numjobs=32 --rw=randwrite --blocksize=4k --group_reporting --norandommap
-
-    # see also for remount upon restart
-    # https://cloud.google.com/compute/docs/disks/add-local-ssd#gcloud
-fi
+echo "$(date) - INSTALL done"
 
 ################
 # NODE
-
+#
 node_external_addr=`curl ifconfig.me/ip`
-echo "Node ${node_id} : $node_external_addr" >> /tmp/install.log
+echo "Node ${node_id} : $node_external_addr"
 if [ ${node_id} -eq 1 ]; then
-    echo "create cluster" >> /tmp/install.log
-    echo "rladmin cluster create name ${cluster_dns} username ${RS_admin} password '${RS_password}' external_addr $node_external_addr flash_enabled " >> /tmp/install.log
-    /opt/redislabs/bin/rladmin cluster create name ${cluster_dns} username ${RS_admin} password '${RS_password}' external_addr $node_external_addr flash_enabled 2>&1 >> /tmp/install.log
+    echo "create cluster"
+    echo "rladmin cluster create name ${cluster_dns} username ${RS_admin} password '${RS_password}' external_addr $node_external_addr flash_enabled "
+    /opt/redislabs/bin/rladmin cluster create name ${cluster_dns} username ${RS_admin} password '${RS_password}' external_addr $node_external_addr flash_enabled 2>&1
 else
-    echo "joining cluster " >> /tmp/install.log
-    echo "/opt/redislabs/bin/rladmin cluster join username ${RS_admin} password '${RS_password}' nodes ${node_1_ip} external_addr $node_external_addr flash_enabled replace_node ${node_id}" >> /tmp/install.log
+    echo "joining cluster "
+    echo "/opt/redislabs/bin/rladmin cluster join username ${RS_admin} password '${RS_password}' nodes ${node_1_ip} external_addr $node_external_addr flash_enabled replace_node ${node_id}"
     for i in {1..10}
     do
-	    /opt/redislabs/bin/rladmin cluster join username ${RS_admin} password '${RS_password}' nodes ${node_1_ip} external_addr $node_external_addr flash_enabled replace_node ${node_id} 2>&1 >> /tmp/install.log
+	    /opt/redislabs/bin/rladmin cluster join username ${RS_admin} password '${RS_password}' nodes ${node_1_ip} external_addr $node_external_addr flash_enabled replace_node ${node_id} 2>&1
     	if [ $? -eq 0 ]; then
 	        break
     	else
-            echo "master node not available, trying again in 30s..."  >> /tmp/install.log
+            echo "master node not available, trying again in 30s..." 
 	        sleep 30
     	fi
     done
 fi
-echo "$(date) - DONE creating cluster node" >> /tmp/install.log
+echo "$(date) - DONE creating cluster node"
 
 ################
 # NODE external_addr - it runs at each reboot to update it
+#
 echo "${node_id}" > /home/ubuntu/node_index.terraform
 cat <<EOF > /home/ubuntu/node_externaladdr.sh
 #!/bin/bash
@@ -109,4 +96,4 @@ chown ubuntu /home/ubuntu/node_externaladdr.sh
 chmod u+x /home/ubuntu/node_externaladdr.sh
 /home/ubuntu/node_externaladdr.sh
 
-echo "$(date) - DONE updating RS external_addr" >> /tmp/install.log
+echo "$(date) - DONE updating RS external_addr"

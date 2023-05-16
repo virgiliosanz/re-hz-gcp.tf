@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# Write everything to /tmp/install.log
+exec 3>&1 4>&2 1>>/tmp/install.log 2>&1
+# Prints commands, prefixing them with a character stored in an environmental variable ($PS4)
+set -x
 
 # Generic
 apt-get -y update
@@ -22,10 +27,10 @@ dpkg-reconfigure --frontend noninteractive tzdata
 sudo apt-get install -y default-jdk 
 sudo apt-get install -y maven
 
-echo "node id: ${node_id}" >> /tmp/install.log
-echo "node 1 ip: ${node_1_ip}" >> /tmp/install.log
-echo "HZ Release to install: ${HZ_release}" >> /tmp/install.log
-echo "Everything at /home/ubuntu/" >> /tmp/install.log
+echo "node id: ${node_id}"
+echo "node 1 ip: ${node_1_ip}"
+echo "HZ Release to install: ${HZ_release}"
+echo "Everything at /home/ubuntu/"
 
 # install hazelcast
 ########### Enterprise
