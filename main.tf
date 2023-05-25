@@ -37,6 +37,12 @@ output "admin_password" {
 output "how_to_ssh_to_bentier" {
   value = "gcloud compute ssh ${google_compute_instance.bentier.name}"
 }
+output "bentier_public_ips" {
+  value = google_compute_instance.bentier.network_interface.0.network_ip
+}
+output "bentier_ssh_gcloud_dont_work" {
+  value = "ssh ubuntu@${google_compute_instance.bentier.network_interface.0.access_config.0.nat_ip}"
+}
 output "how_to_ssh_to_jmeter" {
   value = "gcloud compute ssh ${google_compute_instance.jmeter.name}"
 }

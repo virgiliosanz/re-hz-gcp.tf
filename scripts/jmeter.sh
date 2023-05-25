@@ -1,6 +1,6 @@
 # Write everything to /tmp/install.log
 #
-exec 3>&1 4>&2 1>>/tmp/install.log 2>&1
+exec 3>&1 4>&2 1>>install.log 2>&1
 # Prints commands, prefixing them with a character stored in an environmental variable ($PS4)
 set -x
 #!/bin/bash
@@ -10,8 +10,12 @@ export DEBIAN_FRONTEND=noninteractive
 export TZ="UTC"
 
 apt-get -y update
-apt-get -y upgrade 
+#apt-get -y upgrade 
 apt-get -y install vim iotop iputils-ping netcat dnsutils default-jdk byobu
+apt-get -y install apache2-utils
+
+apt-get -y install python3-pip
+pip3 install locust
 
 apt-get -y install tzdata
 ln -fs /usr/share/zoneinfo/Europe/Paris /etc/localtime

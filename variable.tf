@@ -25,7 +25,8 @@ variable "clustersize" {
 }
 
 variable "machine_type" {
-  default = "e2-standard-2" // 2 vCPU 8GB
+  #default = "e2-standard-2" // 2 vCPU 8GB
+  default = "n2-highcpu-16" // We need a high cpu for testing
   // https://gcpinstances.info/?cost_duration=monthly
   // example with minimal 2vcpu 4GB RAM
   // which leaves about 1.4GB for Redis DB

@@ -6,8 +6,11 @@
     src="https://redislabs.com/wp-content/themes/wpx/assets/images/logo-redis.svg"
     alt="Read more about Redis Enterprise" />
 
-- Docs <https://docs.redislabs.com/latest/rs/>
-- Provided by Redis - <https://redis.com/redis-enterprise-software/overview/>
+This Terraform project creates a Redis cluster, a Hazelcast cluster, a machine for a microservice that has urls for 
+quering redis and hazelcast, and another machine to load test that microservice.
+
+The microservice is developed in java using spring and is called [bentier](misc/redis-bentier.tgz). The source code 
+is located into the *misc* folder. 
 
 ## Assumption
 
@@ -66,6 +69,56 @@ The nodes and cluster are created using external addr and DNS.
 terraform destroy
 ```
 
+## Setup Hazelcast & create a DB
+
+To Set up hazlecast cluster
+ - go to: <http://hz1.vsanz-default.demo.redislabs.com:8080>
+ - Enable dev mode
+ - Add the IPs you see in the terraform output for Hazelcast
+
+
+## Setup Redis DB
+
+ - Go to: <https://cluster.vsanz-default.demo.redislabs.com:8443>
+ - Create a db
+ - Save endpoint and password you setup
+
+
+## Setup bentier microservice
+
+ - ssh ubuntu@bentier.vsanz-default.demo.redislabs.com 
+   I don’t why it doesn’t work using glcloud ssh. :-?
+ - cd redis-bentier
+ - In redis-bentier/src/main/resources/application.properties setup your new db.
+ - Configure hazelcast client in redis-bentier/src/main/resources/hazelcast-client.xml
+   Use the hazelcast IPs to configure the client:
+ - Then run : mvn spring-boot:run in the redis-bentier directory
+
+
+## Let's do the testing
+
+ - Login to jmeter machine: gcloud compute ssh vsanz-default-jmeter
+ - Generate a correct post.data file:
+
+```python
+import urllib.parse
+outfile = open('post.data', 'w')
+params = ({ 'auth_token': 'somelongstringthatendswithanequalssign=' })
+encoded = urllib.parse.urlencode(params)
+outfile.write(encoded)
+outfile.close()
+```
+
+For Hazelcast:
+ - ab -p post.data -T application/x-www-form-urlencoded -n 1000000 -c 500 http://bentier.vsanz-default.demo.redislabs.com:8080/hz/write
+ - ab -n 500000 -c 500 http://bentier.vsanz-default.demo.redislabs.com:8080/hz/read
+
+For Redis:
+ - ab -p post.data -T application/x-www-form-urlencoded -n 1000000 -c 5000 http://bentier.vsanz-default.demo.redislabs.com:8080/write
+ - ab -n 500000 -c 500 http://bentier.vsanz-default.demo.redislabs.com:8080/read
+
+
+
 ## Important note about the installation process
 
 The Redis Enterprise node VM will be up but most likely the installation script will be running in background for `cluster create` and `cluster join` commands.
@@ -107,14 +160,16 @@ If you ssh into a node you can find installation logs:
 
 ```shell
 sudo su - ubuntu
-tail install.log
-tail install_RS.log
+tail /tmp/install.log
+tail /tmp/install_RS.log
 ```
 
 ## Known Issues
 
-- if you stopped the VM in GCP, Terraform will assume their external IP are void and will clean up the DNS but will not restart the VM
+ - if you stopped the VM in GCP, Terraform will assume their external IP are void and will clean up the DNS but will not restart the VM
 
 ##  Hazelcast
 
+
 I have follow the instructions at <https://docs.hazelcast.com/hazelcast/5.2/deploy/deploying-on-gcp>
+
